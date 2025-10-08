@@ -136,21 +136,46 @@ To use the app on iOS devices:
 - Firestore path: `/families/{familyCode}/categories/{categoryId}`
 - Storage path: `/families/{familyCode}/images/{imageId}`
 
-### Auto-Sync
+### Real-Time Sync (Automatic) 🆕
 
-The app automatically syncs data when:
-- ✅ A family code is entered for the first time
-- ✅ A category is added, updated, or deleted
-- ✅ An item is added, updated, or deleted
-- ✅ App is opened (initial sync on startup)
+The app now uses **real-time listeners** for instant updates:
+
+**When Device A makes a change:**
+1. ✅ Data saved locally (Hive) instantly
+2. ✅ Data uploaded to Firebase automatically
+3. ✅ **Device B receives the update IMMEDIATELY** (within 1-2 seconds)
+4. ✅ Device B's local storage is updated automatically
+5. ✅ Device B's UI refreshes to show the new data
+
+**Data Flow:**
+
+**First Time (Initial Load):**
+```
+Enter Family Code → Load from Firebase → Save to Local → Start Real-Time Listeners
+```
+
+**When Adding Data:**
+```
+Device 1: Add Item → Save Locally → Upload to Firebase
+                                          ↓
+                            Firebase broadcasts change
+                                          ↓
+Device 2: Listener receives → Save Locally → UI updates ✨
+```
+
+### Offline Mode
+
+When offline:
+1. **Local-first**: All changes saved to Hive immediately
+2. **App works normally**: No internet required
+3. **Auto-sync on reconnect**: Uploads changes when back online
 
 ### Conflict Resolution
 
-When syncing:
-1. **Local-first**: App works offline, all data saved locally with Hive
-2. **Merge on sync**: Cloud and local data are merged based on `updatedAt` timestamp
+1. **Real-time listeners**: Updates applied as they happen (no conflicts)
+2. **Merge on manual sync**: Cloud and local merged based on `updatedAt`
 3. **Cloud wins**: If timestamps conflict, cloud version takes precedence
-4. **Images**: Local images are automatically uploaded to Firebase Storage
+4. **Images**: Local images automatically uploaded to Firebase Storage
 
 ### Manual Sync
 

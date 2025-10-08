@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:async';
 import '../models/category.dart';
 import '../models/item.dart';
 import '../services/storage_service.dart';
@@ -19,6 +20,11 @@ class AppProvider with ChangeNotifier {
   bool _isEditMode = false;
   bool _isSyncing = false;
   bool _autoSyncEnabled = true;
+  bool _realtimeListenersEnabled = true;
+
+  // Stream subscriptions for real-time updates
+  StreamSubscription<List<Category>>? _categoriesSubscription;
+  StreamSubscription<List<Item>>? _itemsSubscription;
 
   AppProvider({
     required StorageService storageService,
@@ -37,6 +43,7 @@ class AppProvider with ChangeNotifier {
   bool get isEditMode => _isEditMode;
   bool get isSyncing => _isSyncing;
   bool get autoSyncEnabled => _autoSyncEnabled;
+  bool get realtimeListenersEnabled => _realtimeListenersEnabled;
 
   // Initialize
   Future<void> init() async {
@@ -71,6 +78,11 @@ class AppProvider with ChangeNotifier {
 
     // Initial sync after setting family code
     await syncWithCloud();
+
+    // Start listening to real-time updates
+    if (_realtimeListenersEnabled) {
+      _startRealtimeListeners();
+    }
 
     notifyListeners();
   }
@@ -286,9 +298,92 @@ class AppProvider with ChangeNotifier {
     await _autoSync();
   }
 
+  // Real-time Listeners
+  void _startRealtimeListeners() {
+    if (getFamilyCode() == null) return;
+
+    try {
+      print('Starting real-time listeners for family: ${getFamilyCode()}');
+
+      // Listen to category changes
+      _categoriesSubscription = _firebaseService.listenToCategories().listen(
+        (cloudCategories) {
+          print('Received ${cloudCategories.length} categories from Firebase');
+          _handleCategoriesUpdate(cloudCategories);
+        },
+        onError: (error) {
+          print('Error listening to categories: $error');
+        },
+      );
+
+      // Listen to item changes
+      _itemsSubscription = _firebaseService.listenToItems().listen(
+        (cloudItems) {
+          print('Received ${cloudItems.length} items from Firebase');
+          _handleItemsUpdate(cloudItems);
+        },
+        onError: (error) {
+          print('Error listening to items: $error');
+        },
+      );
+    } catch (e) {
+      print('Error starting real-time listeners: $e');
+    }
+  }
+
+  void _stopRealtimeListeners() {
+    _categoriesSubscription?.cancel();
+    _itemsSubscription?.cancel();
+    _categoriesSubscription = null;
+    _itemsSubscription = null;
+    print('Real-time listeners stopped');
+  }
+
+  void toggleRealtimeListeners() {
+    _realtimeListenersEnabled = !_realtimeListenersEnabled;
+    if (_realtimeListenersEnabled && getFamilyCode() != null) {
+      _startRealtimeListeners();
+    } else {
+      _stopRealtimeListeners();
+    }
+    notifyListeners();
+  }
+
+  // Handle real-time updates from Firebase
+  Future<void> _handleCategoriesUpdate(List<Category> cloudCategories) async {
+    try {
+      // Save all cloud categories to local storage
+      for (final category in cloudCategories) {
+        await _storageService.saveCategory(category);
+      }
+
+      // Reload local data
+      loadData();
+      notifyListeners();
+    } catch (e) {
+      print('Error handling categories update: $e');
+    }
+  }
+
+  Future<void> _handleItemsUpdate(List<Item> cloudItems) async {
+    try {
+      // Save all cloud items to local storage
+      for (final item in cloudItems) {
+        await _storageService.saveItem(item);
+      }
+
+      // Reload local data
+      loadData();
+      notifyListeners();
+    } catch (e) {
+      print('Error handling items update: $e');
+    }
+  }
+
   // Dispose
   @override
   void dispose() {
+    _stopRealtimeListeners();
     _ttsService.dispose();
     super.dispose();
   }
