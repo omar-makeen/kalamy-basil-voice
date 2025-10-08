@@ -5,30 +5,38 @@ import '../models/item.dart';
 import '../services/storage_service.dart';
 import '../services/tts_service.dart';
 import '../services/image_service.dart';
+import '../services/firebase_service.dart';
 
 class AppProvider with ChangeNotifier {
   final StorageService _storageService;
   final TtsService _ttsService;
   final ImageService _imageService;
+  final FirebaseService _firebaseService;
 
   List<Category> _categories = [];
   List<Item> _items = [];
   bool _isLoading = false;
   bool _isEditMode = false;
+  bool _isSyncing = false;
+  bool _autoSyncEnabled = true;
 
   AppProvider({
     required StorageService storageService,
     required TtsService ttsService,
     required ImageService imageService,
+    required FirebaseService firebaseService,
   })  : _storageService = storageService,
         _ttsService = ttsService,
-        _imageService = imageService;
+        _imageService = imageService,
+        _firebaseService = firebaseService;
 
   // Getters
   List<Category> get categories => _categories;
   List<Item> get items => _items;
   bool get isLoading => _isLoading;
   bool get isEditMode => _isEditMode;
+  bool get isSyncing => _isSyncing;
+  bool get autoSyncEnabled => _autoSyncEnabled;
 
   // Initialize
   Future<void> init() async {
@@ -59,6 +67,11 @@ class AppProvider with ChangeNotifier {
 
   Future<void> saveFamilyCode(String code) async {
     await _storageService.saveFamilyCode(code);
+    _firebaseService.setFamilyCode(code);
+
+    // Initial sync after setting family code
+    await syncWithCloud();
+
     notifyListeners();
   }
 
@@ -173,6 +186,104 @@ class AppProvider with ChangeNotifier {
   void setEditMode(bool value) {
     _isEditMode = value;
     notifyListeners();
+  }
+
+  // Sync Methods
+  void toggleAutoSync() {
+    _autoSyncEnabled = !_autoSyncEnabled;
+    notifyListeners();
+  }
+
+  /// Sync local data with Firebase Cloud
+  Future<void> syncWithCloud() async {
+    if (_isSyncing) return; // Prevent multiple simultaneous syncs
+
+    try {
+      _isSyncing = true;
+      notifyListeners();
+
+      // Check if Firebase is available
+      final isAvailable = await _firebaseService.isFirebaseAvailable();
+      if (!isAvailable) {
+        print('Firebase is not available, skipping sync');
+        return;
+      }
+
+      // Merge cloud and local data
+      final mergedData = await _firebaseService.mergeCloudData(
+        localCategories: _categories,
+        localItems: _items,
+      );
+
+      final mergedCategories = mergedData['categories'] as List<Category>;
+      final mergedItems = mergedData['items'] as List<Item>;
+
+      // Save merged data to local storage
+      for (final category in mergedCategories) {
+        await _storageService.saveCategory(category);
+      }
+
+      for (final item in mergedItems) {
+        await _storageService.saveItem(item);
+      }
+
+      // Upload local data to cloud
+      await _firebaseService.syncCategoriesToCloud(mergedCategories);
+      await _firebaseService.syncItemsToCloud(mergedItems);
+
+      // Reload data
+      loadData();
+      notifyListeners();
+
+      print('Sync completed successfully');
+    } catch (e) {
+      print('Error syncing with cloud: $e');
+      // Don't throw - app should continue working offline
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
+    }
+  }
+
+  /// Trigger sync after data changes (if auto-sync is enabled)
+  Future<void> _autoSync() async {
+    if (_autoSyncEnabled && getFamilyCode() != null) {
+      // Run sync in background without waiting
+      syncWithCloud().catchError((e) {
+        print('Auto-sync failed: $e');
+      });
+    }
+  }
+
+  // Update all CRUD methods to trigger auto-sync
+  Future<void> addCategoryWithSync(Category category) async {
+    await addCategory(category);
+    await _autoSync();
+  }
+
+  Future<void> updateCategoryWithSync(Category category) async {
+    await updateCategory(category);
+    await _autoSync();
+  }
+
+  Future<void> deleteCategoryWithSync(String id) async {
+    await deleteCategory(id);
+    await _autoSync();
+  }
+
+  Future<void> addItemWithSync(Item item) async {
+    await addItem(item);
+    await _autoSync();
+  }
+
+  Future<void> updateItemWithSync(Item item) async {
+    await updateItem(item);
+    await _autoSync();
+  }
+
+  Future<void> deleteItemWithSync(String id) async {
+    await deleteItem(id);
+    await _autoSync();
   }
 
   // Dispose

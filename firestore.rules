@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is part of the family
+    function isValidFamilyCode(familyCode) {
+      return familyCode is string && familyCode.size() >= 4;
+    }
+
+    // Categories collection
+    // Path: /families/{familyCode}/categories/{categoryId}
+    match /families/{familyCode}/categories/{categoryId} {
+      // Anyone with a valid family code can read
+      allow read: if isValidFamilyCode(familyCode);
+
+      // Anyone with a valid family code can write (create, update, delete)
+      allow write: if isValidFamilyCode(familyCode);
+    }
+
+    // Items collection
+    // Path: /families/{familyCode}/items/{itemId}
+    match /families/{familyCode}/items/{itemId} {
+      // Anyone with a valid family code can read
+      allow read: if isValidFamilyCode(familyCode);
+
+      // Anyone with a valid family code can write (create, update, delete)
+      allow write: if isValidFamilyCode(familyCode);
+    }
+
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper function to check if user is part of the family
+    function isValidFamilyCode(familyCode) {
+      return familyCode is string && familyCode.size() >= 4;
+    }
+
+    // Images path: /families/{familyCode}/images/{imageId}
+    match /families/{familyCode}/images/{imageId} {
+      // Anyone with a valid family code can read
+      allow read: if isValidFamilyCode(familyCode);
+
+      // Anyone with a valid family code can write (upload, update, delete)
+      // Limit to images under 5MB
+      allow write: if isValidFamilyCode(familyCode)
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

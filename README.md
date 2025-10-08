@@ -39,6 +39,8 @@ This app was created to help **Basil**, a child with autism, communicate more ef
 - ✅ Choose from 64 emojis or upload photos
 - ✅ 12 color options for categories
 - ✅ Family Code system for privacy
+- ✅ **Cloud sync across multiple devices** 🆕
+- ✅ **Automatic backup to Firebase** 🆕
 
 ---
 
@@ -62,8 +64,10 @@ flutter run
 
 - **Flutter** 3.35.5
 - **Provider** - State management
-- **Hive** - Local storage
-- **Firebase** - Cloud sync (coming soon)
+- **Hive** - Local offline storage
+- **Firebase** - Cloud sync & backup ✅
+  - Cloud Firestore - Real-time database
+  - Firebase Storage - Image storage
 - **flutter_tts** - Arabic text-to-speech
 
 ---
@@ -84,16 +88,19 @@ lib/
 
 ## 🗺️ Roadmap
 
-### ✅ Phase 1-5: COMPLETED
+### ✅ Phase 1-6: COMPLETED
 - [x] Core app functionality
 - [x] Category & item management
 - [x] Drag-to-reorder
 - [x] Image handling
 - [x] Offline storage
+- [x] **Firebase Cloud Sync** 🎉
+- [x] **Multi-device synchronization** 🎉
+- [x] **Cloud backup for categories & items** 🎉
+- [x] **Image storage in Firebase** 🎉
 
-### 🔜 Phase 6: Firebase Sync (NEXT)
-- [ ] Multi-device sync
-- [ ] Cloud storage
+### 📖 Firebase Setup
+See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for complete setup instructions
 
 ---
 

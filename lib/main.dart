@@ -2,16 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 
+import 'firebase_options.dart';
 import 'providers/app_provider.dart';
 import 'services/storage_service.dart';
 import 'services/tts_service.dart';
 import 'services/image_service.dart';
+import 'services/firebase_service.dart';
 import 'screens/family_code_screen.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Set preferred orientations (portrait only for simplicity)
   await SystemChrome.setPreferredOrientations([
@@ -34,6 +42,7 @@ class MyApp extends StatelessWidget {
             storageService: StorageService(),
             ttsService: TtsService(),
             imageService: ImageService(),
+            firebaseService: FirebaseService(),
           ),
         ),
       ],
