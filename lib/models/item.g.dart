@@ -26,13 +26,14 @@ class ItemAdapter extends TypeAdapter<Item> {
       createdAt: fields[6] as DateTime,
       updatedAt: fields[7] as DateTime,
       order: fields[8] as int,
+      customAudioPath: fields[9] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Item obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class ItemAdapter extends TypeAdapter<Item> {
       ..writeByte(7)
       ..write(obj.updatedAt)
       ..writeByte(8)
-      ..write(obj.order);
+      ..write(obj.order)
+      ..writeByte(9)
+      ..write(obj.customAudioPath);
   }
 
   @override

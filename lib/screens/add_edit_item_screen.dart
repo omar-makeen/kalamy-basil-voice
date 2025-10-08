@@ -33,6 +33,11 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
   File? _selectedFile;
   bool _isLoading = false;
 
+  // Audio recording
+  String? _audioPath;
+  bool _isRecording = false;
+  bool _hasRecording = false;
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +49,9 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
       if (_imageType == 'local') {
         _selectedFile = File(_imageValue);
       }
+      // Load existing audio if available
+      _audioPath = widget.item!.customAudioPath;
+      _hasRecording = _audioPath != null;
     }
   }
 
@@ -88,6 +96,45 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
     });
   }
 
+  Future<void> _startRecording() async {
+    final appProvider = context.read<AppProvider>();
+    final path = await appProvider.startRecording();
+
+    if (path != null) {
+      setState(() {
+        _isRecording = true;
+        _audioPath = path;
+      });
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    final appProvider = context.read<AppProvider>();
+    final path = await appProvider.stopRecording();
+
+    if (path != null) {
+      setState(() {
+        _isRecording = false;
+        _audioPath = path;
+        _hasRecording = true;
+      });
+    }
+  }
+
+  Future<void> _playRecording() async {
+    if (_audioPath != null) {
+      final appProvider = context.read<AppProvider>();
+      await appProvider.playAudio(_audioPath!);
+    }
+  }
+
+  Future<void> _deleteRecording() async {
+    setState(() {
+      _audioPath = null;
+      _hasRecording = false;
+    });
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -119,6 +166,7 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
       createdAt: widget.item?.createdAt ?? now,
       updatedAt: now,
       order: order,
+      customAudioPath: _audioPath,
     );
 
     if (widget.item != null) {
@@ -326,6 +374,138 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
                   contentPadding: const EdgeInsets.all(20),
                 ),
                 maxLines: 2,
+              ),
+              const SizedBox(height: 24),
+
+              // Voice Recording Section
+              _SectionTitle(title: 'تسجيل صوت الأب/الأم (اختياري)'),
+              const SizedBox(height: 8),
+              Text(
+                'سجل صوتك لمساعدة الطفل على التواصل بشكل أفضل',
+                style: GoogleFonts.cairo(
+                  fontSize: 14,
+                  color: const Color(0xFF7F8C8D),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFE0E6ED),
+                    width: 2,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    if (_hasRecording && !_isRecording) ...[
+                      // Show recorded audio controls
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            color: const Color(0xFF27AE60),
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'تم التسجيل',
+                              style: GoogleFonts.cairo(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF27AE60),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.play_arrow, color: Color(0xFF4A90E2)),
+                            onPressed: _playRecording,
+                            tooltip: 'تشغيل',
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, color: Color(0xFFE74C3C)),
+                            onPressed: _deleteRecording,
+                            tooltip: 'حذف',
+                          ),
+                        ],
+                      ),
+                    ] else if (_isRecording) ...[
+                      // Show recording in progress
+                      Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFFE74C3C),
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'جاري التسجيل...',
+                                style: GoogleFonts.cairo(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFFE74C3C),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: _stopRecording,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE74C3C),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: const Icon(Icons.stop),
+                            label: Text(
+                              'إيقاف التسجيل',
+                              style: GoogleFonts.cairo(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else ...[
+                      // Show record button
+                      ElevatedButton.icon(
+                        onPressed: _startRecording,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4A90E2),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.mic, size: 28),
+                        label: Text(
+                          'ابدأ التسجيل',
+                          style: GoogleFonts.cairo(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
               const SizedBox(height: 32),
 
