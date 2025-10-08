@@ -75,21 +75,12 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: AppBar(
           backgroundColor: const Color(0xFF4A90E2),
           elevation: 0,
-          title: GestureDetector(
-            onLongPress: () {
-              // Hidden debug screen access (long press on title)
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const DebugScreen()),
-              );
-            },
-            child: Text(
-              'كلامي - عالم باسل',
-              style: GoogleFonts.cairo(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+          title: Text(
+            'كلامي - عالم باسل',
+            style: GoogleFonts.cairo(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
           centerTitle: true,
@@ -100,6 +91,32 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.white,
               ),
               onPressed: _toggleEditMode,
+            ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert, color: Colors.white),
+              onSelected: (value) {
+                if (value == 'debug') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const DebugScreen()),
+                  );
+                }
+              },
+              itemBuilder: (BuildContext context) => [
+                PopupMenuItem<String>(
+                  value: 'debug',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.bug_report, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'أدوات التصحيح',
+                        style: GoogleFonts.cairo(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
