@@ -43,8 +43,11 @@ dependencies:
   cloud_firestore: ^5.6.0
   firebase_storage: ^12.3.8
 
-  # Text-to-Speech
+  # Text-to-Speech & Audio Recording
   flutter_tts: ^4.2.0
+  record: ^5.1.2
+  just_audio: ^0.9.40
+  permission_handler: ^11.3.1
 
   # Image Handling
   image_picker: ^1.1.2
