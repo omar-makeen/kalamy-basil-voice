@@ -9,17 +9,35 @@ class TtsService {
     if (_isInitialized) return;
 
     try {
-      // Set language to Arabic (Saudi Arabia)
-      await _flutterTts.setLanguage('ar-SA');
+      // Discover available languages and pick best Arabic (Egypt) match, with fallbacks
+      final available = await getLanguages();
+      String selectedLang = 'ar-EG'; // Prefer Egyptian Arabic
+      if (!available.contains(selectedLang)) {
+        if (available.contains('ar-SA')) {
+          selectedLang = 'ar-SA';
+        } else {
+          final anyArabic = available.firstWhere(
+            (l) => l.toLowerCase().startsWith('ar'),
+            orElse: () => available.isNotEmpty ? available.first : 'en-US',
+          );
+          selectedLang = anyArabic;
+        }
+      }
+      await _flutterTts.setLanguage(selectedLang);
 
-      // Set speech rate (0.8 = slower, clearer for children)
-      await _flutterTts.setSpeechRate(0.8);
+      // Set slower speech rate for clarity (web/android ranges are 0-1)
+      await _flutterTts.setSpeechRate(0.6);
 
-      // Set pitch (1.1 = slightly higher, friendly tone)
-      await _flutterTts.setPitch(1.1);
+      // Set neutral pitch
+      await _flutterTts.setPitch(1.0);
 
       // Set volume (1.0 = maximum)
       await _flutterTts.setVolume(1.0);
+
+      // Ensure speak awaits completion on platforms that support it (incl. web)
+      try {
+        await _flutterTts.awaitSpeakCompletion(true);
+      } catch (_) {}
 
       _isInitialized = true;
     } catch (e) {
