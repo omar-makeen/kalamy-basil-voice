@@ -144,6 +144,8 @@ class _FamilyCodeScreenState extends State<FamilyCodeScreen> {
                     TextFormField(
                       controller: _codeController,
                       keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _submitCode(),
                       textAlign: TextAlign.center,
                       style: GoogleFonts.cairo(
                         fontSize: 24,
