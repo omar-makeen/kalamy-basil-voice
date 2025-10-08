@@ -6,6 +6,7 @@ import '../models/category.dart';
 import 'category_screen.dart';
 import 'add_edit_category_screen.dart';
 import 'debug_screen.dart';
+import 'simple_cleanup_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -95,7 +96,12 @@ class _HomeScreenState extends State<HomeScreen> {
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert, color: Colors.white),
               onSelected: (value) {
-                if (value == 'debug') {
+                if (value == 'cleanup') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SimpleCleanupScreen()),
+                  );
+                } else if (value == 'debug') {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const DebugScreen()),
@@ -103,6 +109,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
               },
               itemBuilder: (BuildContext context) => [
+                PopupMenuItem<String>(
+                  value: 'cleanup',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.cleaning_services, size: 20, color: Colors.orange),
+                      const SizedBox(width: 8),
+                      Text(
+                        'تنظيف التكرارات',
+                        style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
                 PopupMenuItem<String>(
                   value: 'debug',
                   child: Row(
