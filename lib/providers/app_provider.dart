@@ -76,8 +76,8 @@ class AppProvider with ChangeNotifier {
     await _storageService.saveFamilyCode(code);
     _firebaseService.setFamilyCode(code);
 
-    // Initial sync after setting family code
-    await syncWithCloud();
+    // Load data from cloud (download only, no upload)
+    await loadFromCloud();
 
     // Start listening to real-time updates
     if (_realtimeListenersEnabled) {
@@ -85,6 +85,53 @@ class AppProvider with ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  /// Load data from Firebase (download only, no upload)
+  /// This is optimized for initial login - much faster than full sync
+  Future<void> loadFromCloud() async {
+    if (_isSyncing) return; // Prevent multiple simultaneous loads
+
+    try {
+      _isSyncing = true;
+      notifyListeners();
+
+      // Check if Firebase is available
+      final isAvailable = await _firebaseService.isFirebaseAvailable();
+      if (!isAvailable) {
+        print('Firebase is not available, using local data only');
+        return;
+      }
+
+      print('Loading data from Firebase (download only)...');
+
+      // Download categories and items from Firebase
+      final cloudCategories = await _firebaseService.downloadCategories();
+      final cloudItems = await _firebaseService.downloadItems();
+
+      print('Downloaded ${cloudCategories.length} categories and ${cloudItems.length} items from Firebase');
+
+      // Save cloud data to local storage
+      for (final category in cloudCategories) {
+        await _storageService.saveCategory(category);
+      }
+
+      for (final item in cloudItems) {
+        await _storageService.saveItem(item);
+      }
+
+      // Reload data from local storage
+      loadData();
+      notifyListeners();
+
+      print('Data loaded successfully from Firebase');
+    } catch (e) {
+      print('Error loading from cloud: $e');
+      // Don't throw - app should continue working with local data
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
+    }
   }
 
   // Categories
@@ -206,7 +253,8 @@ class AppProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sync local data with Firebase Cloud
+  /// Sync local data with Firebase Cloud (full sync with upload)
+  /// Use this for conflict resolution between devices, not for initial load
   Future<void> syncWithCloud() async {
     if (_isSyncing) return; // Prevent multiple simultaneous syncs
 
