@@ -84,7 +84,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     );
 
     if (confirmed == true && mounted) {
-      await context.read<AppProvider>().deleteItem(item.id);
+      await context.read<AppProvider>().deleteItemWithSync(item.id);
     }
   }
 

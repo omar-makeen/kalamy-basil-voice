@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (confirmed == true && mounted) {
-      await context.read<AppProvider>().deleteCategory(category.id);
+      await context.read<AppProvider>().deleteCategoryWithSync(category.id);
     }
   }
 

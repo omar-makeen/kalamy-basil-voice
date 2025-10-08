@@ -22,6 +22,7 @@ class AppProvider with ChangeNotifier {
   bool _autoSyncEnabled = true;
   bool _realtimeListenersEnabled = true;
   bool _isInitialLoad = false;
+  bool _isDeleting = false; // Flag to prevent real-time listeners from overriding deletions
 
   // Stream subscriptions for real-time updates
   StreamSubscription<List<Category>>? _categoriesSubscription;
@@ -171,7 +172,7 @@ class AppProvider with ChangeNotifier {
       for (final dup in duplicateCategories) {
         print('  - "${dup.key}" (${dup.value.length} copies)');
         for (final cat in dup.value) {
-          print('    ID: ${cat.id}, Updated: ${cat.updatedAt}');
+          print('    ID: ${cat.id}, Name: ${cat.name}');
         }
       }
     } else {
@@ -181,7 +182,7 @@ class AppProvider with ChangeNotifier {
     // Check items
     final itemMap = <String, List<Item>>{};
     for (final item in _items) {
-      final key = '${item.name}|${item.categoryId}|${item.order}';
+      final key = '${item.text}|${item.categoryId}|${item.order}';
       itemMap.putIfAbsent(key, () => []).add(item);
     }
     
@@ -274,6 +275,8 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> deleteItem(String id) async {
+    _isDeleting = true; // Set flag to prevent real-time listener interference
+    
     // Get item to check if it has a local image
     final item = getItemById(id);
     if (item != null && item.imageType == 'local') {
@@ -283,6 +286,11 @@ class AppProvider with ChangeNotifier {
     await _storageService.deleteItem(id);
     loadData();
     notifyListeners();
+    
+    // Clear flag after a short delay to allow Firebase sync to complete
+    Future.delayed(const Duration(seconds: 2), () {
+      _isDeleting = false;
+    });
   }
 
   Future<void> reorderItems(List<Item> reorderedItems) async {
@@ -393,33 +401,136 @@ class AppProvider with ChangeNotifier {
 
   // Update all CRUD methods to trigger auto-sync
   Future<void> addCategoryWithSync(Category category) async {
-    await addCategory(category);
-    await _autoSync();
+    try {
+      // Save to local storage
+      await _storageService.saveCategory(category);
+      
+      // Upload to Firebase
+      await _firebaseService.uploadCategory(category);
+      
+      loadData();
+      notifyListeners();
+      
+      print('Category added successfully to both local and Firebase');
+    } catch (e) {
+      print('Error adding category with sync: $e');
+      rethrow;
+    }
   }
 
   Future<void> updateCategoryWithSync(Category category) async {
-    await updateCategory(category);
-    await _autoSync();
+    try {
+      // Save to local storage
+      await _storageService.saveCategory(category);
+      
+      // Upload to Firebase
+      await _firebaseService.uploadCategory(category);
+      
+      loadData();
+      notifyListeners();
+      
+      print('Category updated successfully to both local and Firebase');
+    } catch (e) {
+      print('Error updating category with sync: $e');
+      rethrow;
+    }
   }
 
   Future<void> deleteCategoryWithSync(String id) async {
-    await deleteCategory(id);
-    await _autoSync();
+    _isDeleting = true; // Set flag to prevent real-time listener interference
+    
+    try {
+      // Delete all items in this category first
+      final itemsToDelete = _items.where((item) => item.categoryId == id).toList();
+      for (var item in itemsToDelete) {
+        await _storageService.deleteItem(item.id);
+        await _firebaseService.deleteItem(item.id);
+      }
+
+      // Delete category from local storage
+      await _storageService.deleteCategory(id);
+      
+      // Delete category from Firebase
+      await _firebaseService.deleteCategory(id);
+      
+      loadData();
+      notifyListeners();
+      
+      print('Category deleted successfully from both local and Firebase');
+    } catch (e) {
+      print('Error deleting category with sync: $e');
+    } finally {
+      // Clear flag after a short delay to allow Firebase sync to complete
+      Future.delayed(const Duration(seconds: 2), () {
+        _isDeleting = false;
+      });
+    }
   }
 
   Future<void> addItemWithSync(Item item) async {
-    await addItem(item);
-    await _autoSync();
+    try {
+      // Save to local storage
+      await _storageService.saveItem(item);
+      
+      // Upload to Firebase
+      await _firebaseService.uploadItem(item);
+      
+      loadData();
+      notifyListeners();
+      
+      print('Item added successfully to both local and Firebase');
+    } catch (e) {
+      print('Error adding item with sync: $e');
+      rethrow;
+    }
   }
 
   Future<void> updateItemWithSync(Item item) async {
-    await updateItem(item);
-    await _autoSync();
+    try {
+      // Save to local storage
+      await _storageService.saveItem(item);
+      
+      // Upload to Firebase
+      await _firebaseService.uploadItem(item);
+      
+      loadData();
+      notifyListeners();
+      
+      print('Item updated successfully to both local and Firebase');
+    } catch (e) {
+      print('Error updating item with sync: $e');
+      rethrow;
+    }
   }
 
   Future<void> deleteItemWithSync(String id) async {
-    await deleteItem(id);
-    await _autoSync();
+    _isDeleting = true; // Set flag to prevent real-time listener interference
+    
+    try {
+      // Get item to check if it has a local image
+      final item = getItemById(id);
+      if (item != null && item.imageType == 'local') {
+        await _imageService.deleteImage(item.imageValue);
+      }
+
+      // Delete from local storage
+      await _storageService.deleteItem(id);
+      
+      // Delete from Firebase
+      await _firebaseService.deleteItem(id);
+      
+      loadData();
+      notifyListeners();
+      
+      print('Item deleted successfully from both local and Firebase');
+    } catch (e) {
+      print('Error deleting item with sync: $e');
+    } finally {
+      // Clear flag after a short delay to allow Firebase sync to complete
+      Future.delayed(const Duration(seconds: 2), () {
+        _isDeleting = false;
+      });
+    }
   }
 
   // Real-time Listeners
@@ -490,6 +601,12 @@ class AppProvider with ChangeNotifier {
 
       print('Processing ${cloudCategories.length} categories from real-time update');
       
+      // Clear existing categories from local storage first
+      final existingCategories = _storageService.getAllCategories();
+      for (final category in existingCategories) {
+        await _storageService.deleteCategory(category.id);
+      }
+      
       // Save all cloud categories to local storage
       for (final category in cloudCategories) {
         await _storageService.saveCategory(category);
@@ -511,6 +628,12 @@ class AppProvider with ChangeNotifier {
         return;
       }
 
+      // Skip if we're currently deleting items to prevent interference
+      if (_isDeleting) {
+        print('Skipping items update - deletion in progress');
+        return;
+      }
+
       // Skip if we already have the same number of items (likely initial data)
       if (_items.length == cloudItems.length) {
         print('Skipping items update - same count as current data');
@@ -518,6 +641,12 @@ class AppProvider with ChangeNotifier {
       }
 
       print('Processing ${cloudItems.length} items from real-time update');
+      
+      // Clear existing items from local storage first
+      final existingItems = _storageService.getAllItems();
+      for (final item in existingItems) {
+        await _storageService.deleteItem(item.id);
+      }
       
       // Save all cloud items to local storage
       for (final item in cloudItems) {

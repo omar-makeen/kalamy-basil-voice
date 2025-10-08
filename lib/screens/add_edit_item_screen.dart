@@ -122,9 +122,9 @@ class _AddEditItemScreenState extends State<AddEditItemScreen> {
     );
 
     if (widget.item != null) {
-      await appProvider.updateItem(item);
+      await appProvider.updateItemWithSync(item);
     } else {
-      await appProvider.addItem(item);
+      await appProvider.addItemWithSync(item);
     }
 
     setState(() => _isLoading = false);

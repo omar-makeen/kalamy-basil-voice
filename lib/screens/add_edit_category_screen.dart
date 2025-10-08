@@ -86,9 +86,9 @@ class _AddEditCategoryScreenState extends State<AddEditCategoryScreen> {
     );
 
     if (widget.category != null) {
-      await appProvider.updateCategory(category);
+      await appProvider.updateCategoryWithSync(category);
     } else {
-      await appProvider.addCategory(category);
+      await appProvider.addCategoryWithSync(category);
     }
 
     setState(() => _isLoading = false);
