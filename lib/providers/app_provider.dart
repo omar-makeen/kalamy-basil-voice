@@ -21,6 +21,7 @@ class AppProvider with ChangeNotifier {
   bool _isSyncing = false;
   bool _autoSyncEnabled = true;
   bool _realtimeListenersEnabled = true;
+  bool _isInitialLoad = false;
 
   // Stream subscriptions for real-time updates
   StreamSubscription<List<Category>>? _categoriesSubscription;
@@ -94,6 +95,7 @@ class AppProvider with ChangeNotifier {
 
     try {
       _isSyncing = true;
+      _isInitialLoad = true; // Flag to prevent duplicate data from listeners
       notifyListeners();
 
       // Check if Firebase is available
@@ -125,13 +127,87 @@ class AppProvider with ChangeNotifier {
       notifyListeners();
 
       print('Data loaded successfully from Firebase');
+      
+      // Check for duplicates in loaded data
+      checkForDuplicates();
     } catch (e) {
       print('Error loading from cloud: $e');
       // Don't throw - app should continue working with local data
     } finally {
       _isSyncing = false;
+      _isInitialLoad = false; // Clear the initial load flag
       notifyListeners();
     }
+  }
+
+  /// Clear all local data (for testing or fixing duplicate data issues)
+  Future<void> clearLocalData() async {
+    try {
+      print('Clearing all local data...');
+      await _storageService.clearAllData();
+      loadData();
+      notifyListeners();
+      print('Local data cleared successfully');
+    } catch (e) {
+      print('Error clearing local data: $e');
+    }
+  }
+
+  /// Debug method to check for duplicates in local data
+  void checkForDuplicates() {
+    print('\n🔍 Checking for duplicates in local data...');
+    
+    // Check categories
+    final categoryMap = <String, List<Category>>{};
+    for (final category in _categories) {
+      final key = '${category.name}|${category.order}';
+      categoryMap.putIfAbsent(key, () => []).add(category);
+    }
+    
+    final duplicateCategories = categoryMap.entries.where((e) => e.value.length > 1).toList();
+    print('📁 Categories: ${_categories.length} total');
+    if (duplicateCategories.isNotEmpty) {
+      print('❌ Found ${duplicateCategories.length} duplicate category groups:');
+      for (final dup in duplicateCategories) {
+        print('  - "${dup.key}" (${dup.value.length} copies)');
+        for (final cat in dup.value) {
+          print('    ID: ${cat.id}, Updated: ${cat.updatedAt}');
+        }
+      }
+    } else {
+      print('✅ No duplicate categories found');
+    }
+    
+    // Check items
+    final itemMap = <String, List<Item>>{};
+    for (final item in _items) {
+      final key = '${item.name}|${item.categoryId}|${item.order}';
+      itemMap.putIfAbsent(key, () => []).add(item);
+    }
+    
+    final duplicateItems = itemMap.entries.where((e) => e.value.length > 1).toList();
+    print('\n📄 Items: ${_items.length} total');
+    if (duplicateItems.isNotEmpty) {
+      print('❌ Found ${duplicateItems.length} duplicate item groups:');
+      for (final dup in duplicateItems.take(5)) { // Show first 5 groups
+        print('  - "${dup.key}" (${dup.value.length} copies)');
+        for (final item in dup.value.take(3)) { // Show first 3 items in each group
+          print('    ID: ${item.id}, Updated: ${item.updatedAt}');
+        }
+        if (dup.value.length > 3) print('    ... and ${dup.value.length - 3} more');
+      }
+      if (duplicateItems.length > 5) {
+        print('  ... and ${duplicateItems.length - 5} more duplicate groups');
+      }
+    } else {
+      print('✅ No duplicate items found');
+    }
+    
+    print('\n📊 Summary:');
+    print('Local categories: ${_categories.length}');
+    print('Local items: ${_items.length}');
+    print('Duplicate category groups: ${duplicateCategories.length}');
+    print('Duplicate item groups: ${duplicateItems.length}');
   }
 
   // Categories
@@ -400,6 +476,20 @@ class AppProvider with ChangeNotifier {
   // Handle real-time updates from Firebase
   Future<void> _handleCategoriesUpdate(List<Category> cloudCategories) async {
     try {
+      // Skip if this is the initial load to prevent duplicate data
+      if (_isInitialLoad) {
+        print('Skipping categories update during initial load');
+        return;
+      }
+
+      // Skip if we already have the same number of categories (likely initial data)
+      if (_categories.length == cloudCategories.length) {
+        print('Skipping categories update - same count as current data');
+        return;
+      }
+
+      print('Processing ${cloudCategories.length} categories from real-time update');
+      
       // Save all cloud categories to local storage
       for (final category in cloudCategories) {
         await _storageService.saveCategory(category);
@@ -415,6 +505,20 @@ class AppProvider with ChangeNotifier {
 
   Future<void> _handleItemsUpdate(List<Item> cloudItems) async {
     try {
+      // Skip if this is the initial load to prevent duplicate data
+      if (_isInitialLoad) {
+        print('Skipping items update during initial load');
+        return;
+      }
+
+      // Skip if we already have the same number of items (likely initial data)
+      if (_items.length == cloudItems.length) {
+        print('Skipping items update - same count as current data');
+        return;
+      }
+
+      print('Processing ${cloudItems.length} items from real-time update');
+      
       // Save all cloud items to local storage
       for (final item in cloudItems) {
         await _storageService.saveItem(item);
