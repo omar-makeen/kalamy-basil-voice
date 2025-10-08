@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import '../models/category.dart';
 import '../models/item.dart';
+import '../providers/app_provider.dart';
 
 class SimpleCleanupScreen extends StatefulWidget {
   const SimpleCleanupScreen({super.key});
@@ -27,7 +29,7 @@ class _SimpleCleanupScreenState extends State<SimpleCleanupScreen> {
 
     setState(() {
       _isLoading = true;
-      _statusMessage = 'Cleaning...';
+      _statusMessage = 'جاري التنظيف...\nسيتم حذف التكرارات من Firebase\nثم تحديث التطبيق';
     });
 
     try {
@@ -90,7 +92,7 @@ class _SimpleCleanupScreenState extends State<SimpleCleanupScreen> {
         deleted++;
       }
 
-      print('✅ Deleted $deleted duplicate documents')
+      print('✅ Deleted $deleted duplicate documents');
 
       // Clean categories
       final categoriesRef = firestore
