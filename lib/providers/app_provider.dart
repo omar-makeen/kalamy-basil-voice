@@ -264,6 +264,14 @@ class AppProvider with ChangeNotifier {
       final updatedCategory = reorderedCategories[i].copyWith(order: i);
       await _storageService.saveCategory(updatedCategory);
     }
+    // Push ordering to Firestore so other devices reflect changes
+    try {
+      final toSync = [
+        for (int i = 0; i < reorderedCategories.length; i++)
+          reorderedCategories[i].copyWith(order: i)
+      ];
+      await _firebaseService.updateCategoriesOrder(toSync);
+    } catch (_) {}
     loadData();
     notifyListeners();
   }
@@ -309,10 +317,17 @@ class AppProvider with ChangeNotifier {
   }
 
   Future<void> reorderItems(List<Item> reorderedItems) async {
+    // Save new order locally first
+    final updated = <Item>[];
     for (int i = 0; i < reorderedItems.length; i++) {
       final updatedItem = reorderedItems[i].copyWith(order: i);
+      updated.add(updatedItem);
       await _storageService.saveItem(updatedItem);
     }
+    // Sync ordering to Firestore (best-effort)
+    try {
+      await _firebaseService.updateItemsOrder(updated);
+    } catch (_) {}
     loadData();
     notifyListeners();
   }

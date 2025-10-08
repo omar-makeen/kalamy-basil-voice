@@ -181,6 +181,41 @@ class FirebaseService {
     });
   }
 
+  /// Batch update the order for a list of items in Firestore
+  Future<void> updateItemsOrder(List<Item> items) async {
+    try {
+      final batch = _firestore.batch();
+      for (final item in items) {
+        final docRef = _itemsCollection.doc(item.id);
+        batch.update(docRef, {
+          'order': item.order,
+          // keep writes minimal; do not overwrite other fields
+        });
+      }
+      await batch.commit();
+    } catch (e) {
+      print('Error updating items order: $e');
+      rethrow;
+    }
+  }
+
+  /// Batch update the order for a list of categories in Firestore
+  Future<void> updateCategoriesOrder(List<Category> categories) async {
+    try {
+      final batch = _firestore.batch();
+      for (final category in categories) {
+        final docRef = _categoriesCollection.doc(category.id);
+        batch.update(docRef, {
+          'order': category.order,
+        });
+      }
+      await batch.commit();
+    } catch (e) {
+      print('Error updating categories order: $e');
+      rethrow;
+    }
+  }
+
   // ==================== IMAGE STORAGE ====================
 
   /// Upload an image to Firebase Storage
