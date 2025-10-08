@@ -125,9 +125,9 @@ class AppProvider with ChangeNotifier {
 
       print('Downloaded ${cloudCategories.length} categories and ${cloudItems.length} items from Firebase');
 
-      // Clear existing local data first
+      // Clear existing local data first without reseeding defaults
       print('Clearing local storage before loading from Firebase...');
-      await _storageService.clearAllData();
+      await _storageService.clearDataWithoutDefaults();
 
       // Save cloud data to local storage
       for (final category in cloudCategories) {
@@ -160,7 +160,7 @@ class AppProvider with ChangeNotifier {
   Future<void> clearLocalData() async {
     try {
       print('Clearing all local data...');
-      await _storageService.clearAllData();
+      await _storageService.clearDataWithoutDefaults();
       loadData();
       notifyListeners();
       print('Local data cleared successfully');

@@ -128,6 +128,12 @@ class StorageService {
     await _initializeDefaultData();
   }
 
+  // Clear only categories and items without reseeding defaults or touching settings
+  Future<void> clearDataWithoutDefaults() async {
+    await _categoriesBoxInstance.clear();
+    await _itemsBoxInstance.clear();
+  }
+
   // Close boxes
   Future<void> close() async {
     await _categoriesBoxInstance.close();
