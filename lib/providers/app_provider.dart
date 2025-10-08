@@ -597,21 +597,21 @@ class AppProvider with ChangeNotifier {
         return;
       }
 
-      // Skip if we already have the same number of categories (likely initial data)
-      if (_categories.length == cloudCategories.length) {
-        print('Skipping categories update - same count as current data');
-        return;
+      print('Processing ${cloudCategories.length} categories from real-time update');
+
+      // Get current local categories
+      final localCategories = _storageService.getAllCategories();
+      final cloudCategoryIds = cloudCategories.map((cat) => cat.id).toSet();
+
+      // Delete categories that exist locally but not in cloud (were deleted elsewhere)
+      for (final localCategory in localCategories) {
+        if (!cloudCategoryIds.contains(localCategory.id)) {
+          print('Deleting category ${localCategory.id} - not in cloud');
+          await _storageService.deleteCategory(localCategory.id);
+        }
       }
 
-      print('Processing ${cloudCategories.length} categories from real-time update');
-      
-      // Clear existing categories from local storage first
-      final existingCategories = _storageService.getAllCategories();
-      for (final category in existingCategories) {
-        await _storageService.deleteCategory(category.id);
-      }
-      
-      // Save all cloud categories to local storage
+      // Update/add all cloud categories - Hive will replace by ID (no duplicates)
       for (final category in cloudCategories) {
         await _storageService.saveCategory(category);
       }
@@ -638,21 +638,21 @@ class AppProvider with ChangeNotifier {
         return;
       }
 
-      // Skip if we already have the same number of items (likely initial data)
-      if (_items.length == cloudItems.length) {
-        print('Skipping items update - same count as current data');
-        return;
+      print('Processing ${cloudItems.length} items from real-time update');
+
+      // Get current local items
+      final localItems = _storageService.getAllItems();
+      final cloudItemIds = cloudItems.map((item) => item.id).toSet();
+
+      // Delete items that exist locally but not in cloud (were deleted elsewhere)
+      for (final localItem in localItems) {
+        if (!cloudItemIds.contains(localItem.id)) {
+          print('Deleting item ${localItem.id} - not in cloud');
+          await _storageService.deleteItem(localItem.id);
+        }
       }
 
-      print('Processing ${cloudItems.length} items from real-time update');
-      
-      // Clear existing items from local storage first
-      final existingItems = _storageService.getAllItems();
-      for (final item in existingItems) {
-        await _storageService.deleteItem(item.id);
-      }
-      
-      // Save all cloud items to local storage
+      // Update/add all cloud items - Hive will replace by ID (no duplicates)
       for (final item in cloudItems) {
         await _storageService.saveItem(item);
       }
