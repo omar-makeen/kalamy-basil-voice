@@ -5,6 +5,7 @@ import '../providers/app_provider.dart';
 import '../models/category.dart';
 import 'category_screen.dart';
 import 'add_edit_category_screen.dart';
+import 'debug_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -74,12 +75,21 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: AppBar(
           backgroundColor: const Color(0xFF4A90E2),
           elevation: 0,
-          title: Text(
-            'كلامي - عالم باسل',
-            style: GoogleFonts.cairo(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          title: GestureDetector(
+            onLongPress: () {
+              // Hidden debug screen access (long press on title)
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DebugScreen()),
+              );
+            },
+            child: Text(
+              'كلامي - عالم باسل',
+              style: GoogleFonts.cairo(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
           centerTitle: true,
