@@ -56,6 +56,17 @@ class AppProvider with ChangeNotifier {
 
     loadData();
 
+    // Set family code in Firebase service if it exists
+    final familyCode = getFamilyCode();
+    if (familyCode != null) {
+      _firebaseService.setFamilyCode(familyCode);
+
+      // Start real-time listeners if enabled
+      if (_realtimeListenersEnabled) {
+        _startRealtimeListeners();
+      }
+    }
+
     _isLoading = false;
   }
 
