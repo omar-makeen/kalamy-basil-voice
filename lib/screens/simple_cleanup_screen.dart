@@ -42,6 +42,8 @@ class _SimpleCleanupScreenState extends State<SimpleCleanupScreen> {
       final itemsSnapshot = await itemsRef.get();
       final itemsBefore = itemsSnapshot.docs.length;
 
+      print('📊 Found $itemsBefore items in Firebase');
+
       // Use composite key: text + categoryId + order to find TRUE duplicates
       final itemMap = <String, Map<String, dynamic>>{};
       final duplicateItemDocs = <String>[];
@@ -52,17 +54,25 @@ class _SimpleCleanupScreenState extends State<SimpleCleanupScreen> {
         // Create unique key based on content (text + category + order)
         final uniqueKey = '${item.text}|${item.categoryId}|${item.order}';
 
+        print('Checking: $uniqueKey (docId: ${doc.id}, itemId: ${item.id})');
+
         if (itemMap.containsKey(uniqueKey)) {
           // This is a duplicate! Keep the newer one
           final existing = itemMap[uniqueKey]!;
           final existingItem = existing['item'] as Item;
 
+          print('  ❌ DUPLICATE FOUND!');
+          print('     Existing: updated ${existingItem.updatedAt}');
+          print('     Current:  updated ${item.updatedAt}');
+
           if (item.updatedAt.isAfter(existingItem.updatedAt)) {
             // New item is newer - delete old document, keep new
+            print('     → Keeping current, deleting old doc: ${existing['docId']}');
             duplicateItemDocs.add(existing['docId'] as String);
             itemMap[uniqueKey] = {'item': item, 'docId': doc.id};
           } else {
             // Existing item is newer - delete this document
+            print('     → Keeping existing, deleting current doc: ${doc.id}');
             duplicateItemDocs.add(doc.id);
           }
         } else {
@@ -70,10 +80,17 @@ class _SimpleCleanupScreenState extends State<SimpleCleanupScreen> {
         }
       }
 
+      print('🗑️  Total duplicates to delete: ${duplicateItemDocs.length}');
+
       // Delete duplicates
+      int deleted = 0;
       for (var docId in duplicateItemDocs) {
+        print('Deleting document: $docId');
         await itemsRef.doc(docId).delete();
+        deleted++;
       }
+
+      print('✅ Deleted $deleted duplicate documents')
 
       // Clean categories
       final categoriesRef = firestore
