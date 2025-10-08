@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "170316411027",
+    "project_id": "kalamy-basil-voice",
+    "storage_bucket": "kalamy-basil-voice.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:170316411027:android:261091482c558e772e5d66",
+        "android_client_info": {
+          "package_name": "com.example.kalamy_basil_voice"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6nRvwdugNY0oRfJ8v7RpmyeuiOlk_A4k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

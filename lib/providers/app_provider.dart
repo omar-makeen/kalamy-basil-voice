@@ -114,6 +114,10 @@ class AppProvider with ChangeNotifier {
 
       print('Downloaded ${cloudCategories.length} categories and ${cloudItems.length} items from Firebase');
 
+      // Clear existing local data first
+      print('Clearing local storage before loading from Firebase...');
+      await _storageService.clearAllData();
+
       // Save cloud data to local storage
       for (final category in cloudCategories) {
         await _storageService.saveCategory(category);
