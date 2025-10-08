@@ -42,16 +42,31 @@ class _SimpleCleanupScreenState extends State<SimpleCleanupScreen> {
       final itemsSnapshot = await itemsRef.get();
       final itemsBefore = itemsSnapshot.docs.length;
 
-      final itemMap = <String, Item>{};
+      // Use composite key: text + categoryId + order to find TRUE duplicates
+      final itemMap = <String, Map<String, dynamic>>{};
       final duplicateItemDocs = <String>[];
 
       for (var doc in itemsSnapshot.docs) {
         final item = Item.fromMap(doc.data());
 
-        if (itemMap.containsKey(item.id)) {
-          duplicateItemDocs.add(doc.id);
+        // Create unique key based on content (text + category + order)
+        final uniqueKey = '${item.text}|${item.categoryId}|${item.order}';
+
+        if (itemMap.containsKey(uniqueKey)) {
+          // This is a duplicate! Keep the newer one
+          final existing = itemMap[uniqueKey]!;
+          final existingItem = existing['item'] as Item;
+
+          if (item.updatedAt.isAfter(existingItem.updatedAt)) {
+            // New item is newer - delete old document, keep new
+            duplicateItemDocs.add(existing['docId'] as String);
+            itemMap[uniqueKey] = {'item': item, 'docId': doc.id};
+          } else {
+            // Existing item is newer - delete this document
+            duplicateItemDocs.add(doc.id);
+          }
         } else {
-          itemMap[item.id] = item;
+          itemMap[uniqueKey] = {'item': item, 'docId': doc.id};
         }
       }
 
