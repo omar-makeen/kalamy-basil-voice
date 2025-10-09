@@ -149,8 +149,21 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   Future<void> _initialize() async {
     final appProvider = context.read<AppProvider>();
 
+    // Start timing to ensure minimum splash duration
+    final startTime = DateTime.now();
+    const minSplashDuration = Duration(milliseconds: 3000); // 3 seconds to see animations
+
     // Initialize services
     await appProvider.init();
+
+    // Calculate remaining time to reach minimum duration
+    final elapsedTime = DateTime.now().difference(startTime);
+    final remainingTime = minSplashDuration - elapsedTime;
+
+    // Wait for remaining time if initialization was too fast
+    if (remainingTime.isNegative == false) {
+      await Future.delayed(remainingTime);
+    }
 
     // Navigate based on whether family code exists
     if (mounted) {
