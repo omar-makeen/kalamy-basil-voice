@@ -71,10 +71,78 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+  late AnimationController _logoController;
+  late AnimationController _textController;
+  late AnimationController _shimmerController;
+  late Animation<double> _logoScale;
+  late Animation<double> _logoFade;
+  late Animation<Offset> _textSlide;
+  late Animation<double> _textFade;
+  late Animation<double> _shimmer;
+
   @override
   void initState() {
     super.initState();
+
+    // Logo animations
+    _logoController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _logoScale = CurvedAnimation(
+      parent: _logoController,
+      curve: Curves.elasticOut,
+    );
+
+    _logoFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _logoController,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
+      ),
+    );
+
+    // Text animations
+    _textController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+
+    _textSlide = Tween<Offset>(
+      begin: const Offset(0, 0.5),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _textController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _textFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _textController,
+        curve: Curves.easeIn,
+      ),
+    );
+
+    // Shimmer animation
+    _shimmerController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat();
+
+    _shimmer = Tween<double>(begin: -1.0, end: 2.0).animate(
+      CurvedAnimation(
+        parent: _shimmerController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    // Start animations
+    _logoController.forward();
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) _textController.forward();
+    });
+
     _initialize();
   }
 
@@ -99,68 +167,225 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
+  void dispose() {
+    _logoController.dispose();
+    _textController.dispose();
+    _shimmerController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF4A90E2),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFF4A90E2),
+                const Color(0xFF357ABD),
+                const Color(0xFF2E5C8A),
+              ],
+              stops: const [0.0, 0.5, 1.0],
+            ),
+          ),
+          child: Stack(
             children: [
-              // App Logo
-              Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(35),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 30,
-                      offset: const Offset(0, 15),
+              // Animated background circles
+              _buildBackgroundCircles(),
+
+              // Main content
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Animated Logo
+                    ScaleTransition(
+                      scale: _logoScale,
+                      child: FadeTransition(
+                        opacity: _logoFade,
+                        child: Container(
+                          width: 160,
+                          height: 160,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(40),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 40,
+                                offset: const Offset(0, 20),
+                                spreadRadius: 5,
+                              ),
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.1),
+                                blurRadius: 20,
+                                offset: const Offset(0, -10),
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              const Center(
+                                child: Text(
+                                  '💙',
+                                  style: TextStyle(fontSize: 80),
+                                ),
+                              ),
+                              // Shimmer effect
+                              AnimatedBuilder(
+                                animation: _shimmer,
+                                builder: (context, child) {
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(40),
+                                    child: ShaderMask(
+                                      shaderCallback: (bounds) {
+                                        return LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Colors.white.withOpacity(0.0),
+                                            Colors.white.withOpacity(0.3),
+                                            Colors.white.withOpacity(0.0),
+                                          ],
+                                          stops: [
+                                            _shimmer.value - 0.3,
+                                            _shimmer.value,
+                                            _shimmer.value + 0.3,
+                                          ],
+                                        ).createShader(bounds);
+                                      },
+                                      child: Container(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+
+                    // Animated App Name
+                    SlideTransition(
+                      position: _textSlide,
+                      child: FadeTransition(
+                        opacity: _textFade,
+                        child: Column(
+                          children: [
+                            Text(
+                              'كلامي',
+                              style: GoogleFonts.cairo(
+                                fontSize: 56,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                height: 1.2,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    offset: const Offset(0, 4),
+                                    blurRadius: 8,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'عالم باسل',
+                              style: GoogleFonts.cairo(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white.withOpacity(0.95),
+                                letterSpacing: 1.5,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    offset: const Offset(0, 2),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 60),
+
+                    // Animated Loading Indicator
+                    FadeTransition(
+                      opacity: _textFade,
+                      child: SizedBox(
+                        width: 50,
+                        height: 50,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white.withOpacity(0.9),
+                          ),
+                          strokeWidth: 4,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                child: const Center(
-                  child: Text(
-                    '💙',
-                    style: TextStyle(fontSize: 70),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // App Name
-              Text(
-                'كلامي',
-                style: GoogleFonts.cairo(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  height: 1.2,
-                ),
-              ),
-              Text(
-                'عالم باسل',
-                style: GoogleFonts.cairo(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white.withOpacity(0.9),
-                ),
-              ),
-              const SizedBox(height: 48),
-
-              // Loading Indicator
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                strokeWidth: 3,
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildBackgroundCircles() {
+    return Stack(
+      children: [
+        Positioned(
+          top: -100,
+          right: -100,
+          child: AnimatedBuilder(
+            animation: _logoController,
+            builder: (context, child) {
+              return Opacity(
+                opacity: 0.1 * _logoFade.value,
+                child: Container(
+                  width: 300,
+                  height: 300,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        Positioned(
+          bottom: -150,
+          left: -150,
+          child: AnimatedBuilder(
+            animation: _textController,
+            builder: (context, child) {
+              return Opacity(
+                opacity: 0.08 * _textFade.value,
+                child: Container(
+                  width: 400,
+                  height: 400,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
