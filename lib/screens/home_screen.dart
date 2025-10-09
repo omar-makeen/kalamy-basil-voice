@@ -86,56 +86,23 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           centerTitle: true,
           actions: [
-            IconButton(
-              icon: Icon(
-                _isEditMode ? Icons.check : Icons.settings,
-                color: Colors.white,
-              ),
-              onPressed: _toggleEditMode,
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: Colors.white),
-              onSelected: (value) {
-                if (value == 'cleanup') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SimpleCleanupScreen()),
-                  );
-                } else if (value == 'debug') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const DebugScreen()),
-                  );
-                }
+            GestureDetector(
+              onTap: _toggleEditMode,
+              onLongPress: () {
+                // Long-press settings icon to access cleanup tool
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SimpleCleanupScreen()),
+                );
               },
-              itemBuilder: (BuildContext context) => [
-                PopupMenuItem<String>(
-                  value: 'cleanup',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.cleaning_services, size: 20, color: Colors.orange),
-                      const SizedBox(width: 8),
-                      Text(
-                        'تنظيف التكرارات',
-                        style: GoogleFonts.cairo(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Icon(
+                  _isEditMode ? Icons.check : Icons.settings,
+                  color: Colors.white,
+                  size: 24,
                 ),
-                PopupMenuItem<String>(
-                  value: 'debug',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.bug_report, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        'أدوات التصحيح',
-                        style: GoogleFonts.cairo(),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),
