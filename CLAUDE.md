@@ -285,7 +285,8 @@ dependency_overrides:
 
 ## Debugging Tools
 
-**Cleanup Tool:** Access via ⋮ menu button in home screen
+**Cleanup Tool:** Access via **long-press on settings icon** in home screen
+- Removed from 3-dot menu for cleaner UI (debug tool was also removed as unused)
 - Removes duplicate items from Firebase (compares by text+category+order)
 - Pre-filled with family code 2024
 - Shows detailed logs of what's being cleaned
