@@ -172,9 +172,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 }
 
                 if (appProvider.isEditMode) {
-                  // Reorderable list in edit mode
+                  // Reorderable list in edit mode with custom drag handles for better Android support
                   return ReorderableListView.builder(
                     padding: const EdgeInsets.all(16),
+                    buildDefaultDragHandles: false, // Disable default drag handles
                     itemCount: items.length,
                     onReorder: (oldIndex, newIndex) async {
                       if (newIndex > oldIndex) {
@@ -187,24 +188,27 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     },
                     itemBuilder: (context, index) {
                       final item = items[index];
-                      return _ItemCard(
+                      return ReorderableDragStartListener(
                         key: ValueKey(item.id),
-                        item: item,
-                        categoryColor: Color(widget.category.colorValue),
-                        isEditMode: appProvider.isEditMode,
-                        onTap: () => _handleItemTap(item),
-                        onEdit: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => AddEditItemScreen(
-                                category: widget.category,
-                                item: item,
+                        index: index,
+                        child: _ItemCard(
+                          item: item,
+                          categoryColor: Color(widget.category.colorValue),
+                          isEditMode: appProvider.isEditMode,
+                          onTap: () => _handleItemTap(item),
+                          onEdit: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AddEditItemScreen(
+                                  category: widget.category,
+                                  item: item,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                        onDelete: () => _deleteItem(item),
+                            );
+                          },
+                          onDelete: () => _deleteItem(item),
+                        ),
                       );
                     },
                   );
@@ -367,11 +371,17 @@ class _ItemCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isEditMode) {
       // List tile view for edit mode with reordering
+      // The entire card is draggable with ReorderableDragStartListener
       return Container(
+        key: ValueKey(item.id),
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: categoryColor.withOpacity(0.3),
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
               color: categoryColor.withOpacity(0.2),
@@ -385,7 +395,11 @@ class _ItemCard extends StatelessWidget {
           leading: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.drag_handle, color: Color(0xFF95A5A6)),
+              const Icon(
+                Icons.drag_handle,
+                color: Color(0xFF95A5A6),
+                size: 32,
+              ),
               const SizedBox(width: 12),
               Container(
                 width: 60,
