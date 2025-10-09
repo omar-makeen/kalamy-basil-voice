@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ CRITICAL INSTRUCTION
+
+**ALWAYS UPDATE THIS FILE (CLAUDE.md) when:**
+- Adding new features or architecture patterns
+- Discovering important implementation details
+- Solving issues or adding workarounds
+- Making significant code changes
+- Learning new project conventions
+
+This ensures all future Claude Code instances have up-to-date information.
+
 ## Project Overview
 
 **Basil Voice (كلامي - عالم باسل)** is a Flutter communication app for children with autism and special needs. It helps children express their needs through an intuitive visual interface with voice feedback using parent-recorded audio or Arabic TTS.
