@@ -10,6 +10,7 @@ import 'services/storage_service.dart';
 import 'services/tts_service.dart';
 import 'services/image_service.dart';
 import 'services/firebase_service.dart';
+import 'services/audio_service.dart';
 import 'screens/family_code_screen.dart';
 import 'screens/home_screen.dart';
 
@@ -43,6 +44,7 @@ class MyApp extends StatelessWidget {
             ttsService: TtsService(),
             imageService: ImageService(),
             firebaseService: FirebaseService(),
+            audioService: AudioService(),
           ),
         ),
       ],

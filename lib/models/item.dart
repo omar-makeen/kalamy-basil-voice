@@ -31,6 +31,9 @@ class Item {
   @HiveField(8)
   final int order;
 
+  @HiveField(9)
+  final String? customAudioPath; // Path to recorded audio file
+
   Item({
     required this.id,
     required this.categoryId,
@@ -41,6 +44,7 @@ class Item {
     required this.createdAt,
     required this.updatedAt,
     required this.order,
+    this.customAudioPath,
   });
 
   Item copyWith({
@@ -53,6 +57,7 @@ class Item {
     DateTime? createdAt,
     DateTime? updatedAt,
     int? order,
+    String? customAudioPath,
   }) {
     return Item(
       id: id ?? this.id,
@@ -64,6 +69,7 @@ class Item {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       order: order ?? this.order,
+      customAudioPath: customAudioPath ?? this.customAudioPath,
     );
   }
 
@@ -80,6 +86,7 @@ class Item {
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
       'order': order,
+      'customAudioPath': customAudioPath,
     };
   }
 
@@ -94,6 +101,7 @@ class Item {
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] ?? 0),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] ?? 0),
       order: map['order'] ?? 0,
+      customAudioPath: map['customAudioPath'],
     );
   }
 }

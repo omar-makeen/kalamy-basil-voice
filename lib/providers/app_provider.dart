@@ -7,12 +7,14 @@ import '../services/storage_service.dart';
 import '../services/tts_service.dart';
 import '../services/image_service.dart';
 import '../services/firebase_service.dart';
+import '../services/audio_service.dart';
 
 class AppProvider with ChangeNotifier {
   final StorageService _storageService;
   final TtsService _ttsService;
   final ImageService _imageService;
   final FirebaseService _firebaseService;
+  final AudioService _audioService;
 
   List<Category> _categories = [];
   List<Item> _items = [];
@@ -33,10 +35,12 @@ class AppProvider with ChangeNotifier {
     required TtsService ttsService,
     required ImageService imageService,
     required FirebaseService firebaseService,
+    required AudioService audioService,
   })  : _storageService = storageService,
         _ttsService = ttsService,
         _imageService = imageService,
-        _firebaseService = firebaseService;
+        _firebaseService = firebaseService,
+        _audioService = audioService;
 
   // Getters
   List<Category> get categories => _categories;
@@ -691,11 +695,62 @@ class AppProvider with ChangeNotifier {
     }
   }
 
+  // Audio Recording & Playback Methods
+  AudioService get audioService => _audioService;
+
+  bool get isRecording => _audioService.isRecording;
+  bool get isPlayingAudio => _audioService.isPlaying;
+
+  Future<String?> startRecording() async {
+    return await _audioService.startRecording();
+  }
+
+  Future<String?> stopRecording() async {
+    return await _audioService.stopRecording();
+  }
+
+  Future<void> cancelRecording() async {
+    await _audioService.cancelRecording();
+  }
+
+  Future<void> playAudio(String path) async {
+    await _audioService.playAudio(path);
+  }
+
+  Future<void> stopAudio() async {
+    await _audioService.stopAudio();
+  }
+
+  Future<String?> uploadAudio(String localPath, String itemId) async {
+    final familyCode = getFamilyCode();
+    if (familyCode == null) return null;
+    return await _audioService.uploadAudio(localPath, itemId, familyCode);
+  }
+
+  Future<String?> downloadAudio(String downloadUrl, String itemId) async {
+    return await _audioService.downloadAudio(downloadUrl, itemId);
+  }
+
+  Future<void> deleteAudio(String? localPath, String itemId) async {
+    final familyCode = getFamilyCode();
+
+    // Delete local audio if path is provided
+    if (localPath != null) {
+      await _audioService.deleteLocalAudio(localPath);
+    }
+
+    // Delete Firebase audio if family code exists
+    if (familyCode != null) {
+      await _audioService.deleteFirebaseAudio(itemId, familyCode);
+    }
+  }
+
   // Dispose
   @override
   void dispose() {
     _stopRealtimeListeners();
     _ttsService.dispose();
+    _audioService.dispose();
     super.dispose();
   }
 }

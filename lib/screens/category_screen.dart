@@ -25,8 +25,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
   Future<void> _handleItemTap(Item item) async {
     final appProvider = context.read<AppProvider>();
 
-    // Speak the text
-    await appProvider.speak(item.speechText);
+    // Play custom audio if available, otherwise use TTS
+    if (item.customAudioPath != null && item.customAudioPath!.isNotEmpty) {
+      // Play recorded parent voice
+      await appProvider.playAudio(item.customAudioPath!);
+    } else {
+      // Fall back to TTS
+      await appProvider.speak(item.speechText);
+    }
 
     // Show encouragement message
     setState(() => _showEncouragement = true);
