@@ -77,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: const Color(0xFF4A90E2),
           elevation: 0,
           title: Text(
-            'كلامي - عالم باسل',
+            'كلامي - 🌍 عالم باسل',
             style: GoogleFonts.cairo(
               fontSize: 24,
               fontWeight: FontWeight.bold,
