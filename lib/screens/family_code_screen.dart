@@ -80,7 +80,7 @@ class _FamilyCodeScreenState extends State<FamilyCodeScreen> {
 
                     // Title
                     Text(
-                      'كلامي - 🌍 عالم باسل',
+                      'كلامي - عالم باسل 🌍',
                       style: GoogleFonts.cairo(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,

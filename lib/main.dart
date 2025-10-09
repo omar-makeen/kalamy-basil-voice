@@ -310,7 +310,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              '🌍 عالم باسل',
+                              'عالم باسل 🌍',
                               style: GoogleFonts.cairo(
                                 fontSize: 32,
                                 fontWeight: FontWeight.w600,
