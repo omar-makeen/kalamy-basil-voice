@@ -15,9 +15,22 @@ This ensures all future Claude Code instances have up-to-date information.
 
 ## Project Overview
 
-**Basil Voice (كلامي - عالم باسل)** is a Flutter communication app for children with autism and special needs. It helps children express their needs through an intuitive visual interface with voice feedback using parent-recorded audio or Arabic TTS.
+**Basil Voice (كلامي - 🌍 عالم باسل)** is a Flutter communication app for children with autism and special needs. It helps children express their needs through an intuitive visual interface with voice feedback using parent-recorded audio or Arabic TTS.
 
 **Key Feature:** Parents can record their own voice for each item, as children with autism respond significantly better to familiar voices than synthetic TTS.
+
+## Splash Screen
+
+**Impressive animated splash screen with:**
+- Gradient background (3-color blue gradient)
+- Elastic scale animation for logo (bouncy entrance)
+- Shimmer effect sweeping across logo
+- Slide-up fade animation for app name
+- Animated background circles with opacity
+- Minimum 3-second display time to ensure animations are visible
+- Uses `TickerProviderStateMixin` for smooth 60fps animations
+
+**Important:** The splash screen has a **minimum 3-second display** to ensure all beautiful animations are seen, even if app initialization is fast.
 
 ## Development Commands
 
